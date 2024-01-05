@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройки дев окружений</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f4f4f4;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        form {
+            width: 80%;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+
+        .dev-environment {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #fff;
+            border-radius: 6px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .repositories {
+            margin-top: 10px;
+        }
+
+        .repository {
+            border: 1px solid #eee;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+            display: flex;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        input {
+            width: calc(100% - 12px);
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin: 0 5px 10px 5px;
+        }
+
+        button {
+            margin-right: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            background-color: #4caf50;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .removeRepository {
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Настройки дев окружений</h1>
+
+<form onsubmit="submitForm(event)" method="post" id="devEnvironmentsForm">
+    <div id="devEnvironments">
+
+    </div>
+
+    <button type="button" onclick="addDevEnvironment()">Создать настройки для дев окружения</button>
+    <button type="submit">Сохранить</button>
+</form>
+
+<script>
+    fetch('/get-data', {
+        method: 'get',
+    })
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(devEnvironment => {
+                const devEnvironmentDiv = createDevEnvironmentElement(devEnvironment);
+                const devEnvironmentsContainer = document.getElementById('devEnvironments');
+                devEnvironmentsContainer.appendChild(devEnvironmentDiv);
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+
+    function createElement(tag, attributes = {}) {
+        const element = document.createElement(tag);
+        for (const key in attributes) {
+            element[key] = attributes[key];
+        }
+        return element;
+    }
+
+    function createDevEnvironmentElement(devEnvironment) {
+        const devEnvironmentDiv = createElement('div', { className: 'dev-environment' });
+
+        const nameLabel = createElement('label', { textContent: 'Название дев окружения' });
+        const nameInput = createElement('input', { type: 'text', name: 'devEnvironmentName', value: devEnvironment.name ?? '' });
+
+        const repositoriesLabel = createElement('label', { textContent: 'Репозитории' });
+        const repositoriesDiv = createElement('div', { className: 'repositories' });
+
+        (devEnvironment.repositories || []).forEach(repository => {
+            const repositoryDiv = createRepositoryElement(repository);
+            repositoriesDiv.appendChild(repositoryDiv);
+        });
+
+        const addRepoButton = createElement('button', { type: 'button', textContent: 'Добавить репозиторий', onclick: addRepository });
+        const removeDevEnvironmentButton = createElement('button', { type: 'button', textContent: 'Удалить дев окружение', onclick: removeElement });
+
+        devEnvironmentDiv.appendChild(nameLabel);
+        devEnvironmentDiv.appendChild(nameInput);
+        devEnvironmentDiv.appendChild(repositoriesLabel);
+        devEnvironmentDiv.appendChild(repositoriesDiv);
+        devEnvironmentDiv.appendChild(addRepoButton);
+        devEnvironmentDiv.appendChild(removeDevEnvironmentButton);
+
+        return devEnvironmentDiv;
+    }
+
+    function createRepositoryElement(repository) {
+        const repositoryDiv = createElement('div', { className: 'repository' });
+
+
+        const pathInput = createElement('input', { type: 'text', name: 'repositoryPath', value: repository.path ?? '' ,  placeholder: 'Путь до репозитория'});
+
+
+        const nameInput = createElement('input', { type: 'text', name: 'repositoryName', value: repository.name ?? '' , placeholder: 'Названия репозитория'});
+
+
+        const actionInput = createElement('input', { type: 'text', name: 'repositoryAction', value: repository.action ?? '' , placeholder: 'Действие для перезапуска сервиса'});
+
+        const removeRepoButton = createElement('button', {
+            type: 'button',
+            textContent: 'Удалить репозиторий',
+            onclick: removeElement,
+            className: 'removeRepository',
+        });
+
+
+        repositoryDiv.appendChild(pathInput);
+
+        repositoryDiv.appendChild(nameInput);
+
+        repositoryDiv.appendChild(actionInput);
+        repositoryDiv.appendChild(removeRepoButton);
+
+        return repositoryDiv;
+    }
+
+    function removeElement() {
+        const element = this.closest('.repository, .dev-environment');
+        if (element) {
+            element.parentNode.removeChild(element);
+        }
+    }
+
+    function addDevEnvironment() {
+        const devEnvironmentsContainer = document.getElementById('devEnvironments');
+        const devEnvironmentDiv = createDevEnvironmentElement({});
+        devEnvironmentsContainer.appendChild(devEnvironmentDiv);
+    }
+
+    function addRepository() {
+        const repositoriesDiv = this.parentElement.querySelector('.repositories');
+        const repositoryDiv = createRepositoryElement({});
+        repositoriesDiv.appendChild(repositoryDiv);
+    }
+
+    function submitForm(e) {
+        e.preventDefault()
+        const devEnvironmentsContainer = document.getElementById('devEnvironments');
+        const devEnvironments = devEnvironmentsContainer.querySelectorAll('.dev-environment');
+
+        const formData = [];
+
+        devEnvironments.forEach(devEnvironment => {
+            const nameInput = devEnvironment.querySelector('input[name="devEnvironmentName"]');
+            const repositoriesDiv = devEnvironment.querySelector('.repositories');
+            const repositories = repositoriesDiv.querySelectorAll('.repository');
+
+            const devEnvironmentData = {
+                name: nameInput.value,
+                repositories: [],
+            };
+
+            repositories.forEach(repository => {
+                const pathInput = repository.querySelector('input[name="repositoryPath"]');
+                const nameInput = repository.querySelector('input[name="repositoryName"]');
+                const actionInput = repository.querySelector('input[name="repositoryAction"]');
+
+                const repositoryData = {
+                    path: pathInput.value,
+                    name: nameInput.value,
+                    action: actionInput.value,
+                };
+
+                devEnvironmentData.repositories.push(repositoryData);
+            });
+
+            formData.push(devEnvironmentData);
+        });
+
+        fetch('/save-data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData),
+        })
+            .then(response => response.json())
+            .then(data => {
+
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+</script>
+
+</body>
+</html>
