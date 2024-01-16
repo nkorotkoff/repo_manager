@@ -6,10 +6,17 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"repo_manager/internal/structs"
 	"strings"
 )
 
 func Checkout(repoPath string, targetBranch string) error {
+
+	err := GitPull(repoPath)
+
+	if err != nil {
+		log.Println(err)
+	}
 
 	gitPath, err := exec.LookPath("git")
 
@@ -25,6 +32,7 @@ func Checkout(repoPath string, targetBranch string) error {
 }
 
 func GitStatus(repoPath string) (string, error) {
+
 	gitPath, err := exec.LookPath("git")
 	if err != nil {
 		log.Fatal("Git not found in PATH")
@@ -62,6 +70,32 @@ func GitPull(repoPath string) error {
 
 	err = cmd.Run()
 	return err
+}
+
+func ApplyActions(repository structs.Repository) {
+	if len(repository.Action) == 0 {
+		fmt.Println("repository have no actions")
+		return
+	}
+
+	action := strings.Fields(repository.Action)
+
+	programPath, err := exec.LookPath(action[0])
+
+	if err != nil {
+		log.Printf("program %s not found\n", action[0])
+		return
+	}
+
+	cmd := exec.Command(programPath, "-C", repository.Path)
+	cmd.Args = append(cmd.Args, action[1:]...)
+
+	err = cmd.Run()
+
+	if err != nil {
+		log.Println(err)
+	}
+
 }
 
 func addCredentialsToURL(url, username, password string) string {

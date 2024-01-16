@@ -242,12 +242,14 @@ func handleGitCheckout(bot *tgbotapi.BotAPI, chatID int64, args []string) {
 	}
 
 	sendMessage(bot, chatID, response)
+
+	repo_manager.ApplyActions(repo)
 }
 
 func handleGitPull(bot *tgbotapi.BotAPI, chatID int64, args []string) {
 	state := getState(chatID)
 	if !state.serviceSelected {
-		sendMessage(bot, chatID, "Сначала выберите дева и репозиторий")
+		sendMessage(bot, chatID, "Сначала выберите дев и репозиторий")
 		return
 	}
 
@@ -265,6 +267,8 @@ func handleGitPull(bot *tgbotapi.BotAPI, chatID int64, args []string) {
 	}
 
 	sendMessage(bot, chatID, response)
+
+	repo_manager.ApplyActions(repo)
 }
 
 func handleGitStatus(bot *tgbotapi.BotAPI, chatID int64, args []string) {
